@@ -42,6 +42,14 @@ function requireLogin(req, res, next) {
   next();
 }
 
+async function addUsersToRoom(db, roomId, userIds) {
+  for (let userId of userIds) {
+    await db.execute(`
+      INSERT IGNORE INTO room_user (user_id, room_id)
+      VALUES (?, ?)
+    `, [userId, roomId]);
+  }
+}
 
 app.get("/signup", (req, res) => {
   res.send(`
@@ -207,13 +215,7 @@ app.post("/create-room", requireLogin, async (req, res) => {
 
   if (members) {
     const memberList = Array.isArray(members) ? members : [members];
-
-    for (let userId of memberList) {
-      await db.execute(
-        "INSERT INTO room_user (user_id, room_id) VALUES (?, ?)",
-        [userId, roomId]
-      );
-    }
+    await addUsersToRoom(db, roomId, memberList);
   }
 
   res.redirect(`/rooms/${roomId}`);
@@ -362,6 +364,54 @@ app.post("/react", requireLogin, async (req, res) => {
   }
 
   res.redirect(`/rooms/${room_id}`);
+});
+
+app.get("/rooms/:id/invite", requireLogin, async (req, res) => {
+  const roomId = req.params.id;
+
+  const [existing] = await db.execute(`
+    SELECT user_id FROM room_user WHERE room_id = ?
+  `, [roomId]);
+
+  const existingIds = existing.map(u => u.user_id);
+
+  const [users] = await db.execute(`
+    SELECT user_id, username 
+    FROM user 
+    WHERE user_id NOT IN (${existingIds.length ? existingIds.join(",") : 0})
+  `);
+
+  let html = `
+    <h2>Invite Users</h2>
+    <form method="POST">
+  `;
+
+  users.forEach(u => {
+    html += `
+      <input type="checkbox" name="members" value="${u.user_id}">
+      ${u.username}<br>
+    `;
+  });
+
+  html += `
+      <br><button>Invite</button>
+    </form>
+    <br><a href="/rooms/${roomId}">Back</a>
+  `;
+
+  res.send(html);
+});
+
+app.post("/rooms/:id/invite", requireLogin, async (req, res) => {
+  const roomId = req.params.id;
+  const { members } = req.body;
+
+  if (members) {
+    const memberList = Array.isArray(members) ? members : [members];
+    await addUsersToRoom(db, roomId, memberList);
+  }
+
+  res.redirect(`/rooms/${roomId}`);
 });
 
 app.listen(3000, () => {

@@ -65,6 +65,17 @@ app.get("/signup", (req, res) => {
 app.post("/signup", async (req, res) => {
   const { email, username, password } = req.body;
 
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/;
+
+  if (!passwordRegex.test(password)) {
+    return res.send(`
+      Password must be at least 10 characters and include:
+      uppercase, lowercase, number, symbol.
+      <br><a href="/signup">Go back</a>
+    `);
+  }
+  if (!password) return res.send("Password required");
+
   const hash = await bcrypt.hash(password, 10);
 
   const [result] = await db.execute(
@@ -264,7 +275,7 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
 `, [maxId, req.session.user_id, roomId]);
 
   const [messages] = await db.execute(`
-  SELECT m.message_id, m.text, u.username, GROUP_CONCAT(CONCAT(e.name, ' x', rc.cnt) SEPARATOR ' ') AS emojis
+  SELECT m.message_id, m.text, m.sent_datetime, u.username, GROUP_CONCAT(CONCAT(e.name, ' x', rc.cnt) SEPARATOR ' ') AS emojis
   FROM message m
   JOIN user u ON m.user_id = u.user_id
   LEFT JOIN (
@@ -292,6 +303,7 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
 
   messages.forEach(m => {
     const isMe = m.username === req.session.username;
+    const time = new Date(m.sent_datetime).toLocaleString();
 
     html += `
       <div style="
@@ -306,6 +318,7 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
           max-width: 60%;
         ">
           <b>${m.username}</b>: ${m.text}
+          <small style="color:gray;">${time}</small>
           ${m.emojis ? " [" + m.emojis + "]" : ""}
 
           <form method="POST" action="/react" style="display:inline;">

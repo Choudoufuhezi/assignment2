@@ -117,44 +117,47 @@ app.get("/rooms", requireLogin, async (req, res) => {
     WHERE ru.user_id = ?
     GROUP BY r.room_id
   `, [req.session.user_id]);
-  let html = "<h2>Rooms</h2>";
+  let html = `
+    <h2>Rooms</h2>
+    <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+      <tr>
+        <th>Room</th>
+        <th>Last Message Date</th>
+        <th>Unread</th>
+      </tr>
+  `;
 
   rows.forEach(r => {
+    let dateText = "No messages";
+
+    if (r.last_message_date) {
+      const d = new Date(r.last_message_date);
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+
+      const today = new Date();
+      const msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const diffDays = Math.floor((todayDate - msgDate) / (1000 * 60 * 60 * 24));
+
+      dateText = `${month}-${day} (${diffDays} day${diffDays !== 1 ? "s" : ""} ago)`;
+    }
+
     html += `
       <tr>
-        <td>
-          <a href="/rooms/${r.room_id}">
-            ${r.name}
-          </a>
-        </td>
-
-        <td>
-          ${r.last_message_date 
-            ? (() => {
-                const d = new Date(r.last_message_date);
-
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-
-                const today = new Date();
-                const diffTime = today - d;
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-                return `${month}-${day} (${diffDays} day${diffDays !== 1 ? 's' : ''} ago)`;
-              })()
-  : "No messages"}
-        </td>
-
-        <td>
-          ${r.unread}
-        </td>
+        <td><a href="/rooms/${r.room_id}">${r.name}</a></td>
+        <td>${dateText}</td>
+        <td>${r.unread}</td>
       </tr>
     `;
   });
 
-  html += `<br><a href="/create-room">Create Room</a>`;
-  html += `<br><a href="/logout">Logout</a>`;
-
+  html += `
+    </table>
+    <br><a href="/create-room">Create Room</a>
+    <br><a href="/logout">Logout</a>
+  `;
+  
   res.send(html);
 });
 

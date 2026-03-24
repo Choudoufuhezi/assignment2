@@ -232,6 +232,13 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
   if (check.length === 0) {
     return res.status(400).send("Unauthorized");
   }
+  const [roomRows] = await db.execute(`
+  SELECT r.name
+  FROM room
+  WHERE room_id = ? 
+  `, [roomId]);
+
+  const room_name = roomRows[0].name;
 
   const [maxRows] = await db.execute(`
   SELECT MAX(message_id) as max_id 
@@ -239,13 +246,8 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
   WHERE room_id = ?
 `, [roomId]);
 
-  const room_name = await db.execute(`
-  SELECT r.name
-  FROM room
-  WHERE room_id = ? 
-  `, [roomId]);
 
-  const maxId = maxRows[0].max_id;
+  const maxId = maxRows[0].max_id || 0;
 
   await db.execute(`
   UPDATE room_user

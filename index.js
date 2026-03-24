@@ -127,7 +127,7 @@ app.get("/rooms", requireLogin, async (req, res) => {
   `, [req.session.user_id]);
 
   const [name] = await db.execute( `
-      SELECT user.name
+      SELECT user.username
       FROM user
       WHERE user.user_id = ?
     `, [req.session.user_id]);

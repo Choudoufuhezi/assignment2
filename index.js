@@ -110,8 +110,7 @@ app.get("/logout", (req, res) => {
 
 app.get("/rooms", requireLogin, async (req, res) => {
   const [rows] = await db.execute(`
-    SELECT r.room_id, r.name,
-          COUNT(m.message_id) AS unread
+    SELECT r.room_id, r.name, COUNT(m.message_id) AS unread, (SELECT text FROM message WHERE room_id = r.room_id ORDER BY message_id DESC LIMIT 1) AS last_message
     FROM room_user ru
     JOIN room r ON ru.room_id = r.room_id
     LEFT JOIN message m ON m.room_id = r.room_id AND m.message_id > IFNULL(ru.last_read_message_id, 0) AND m.user_id != ru.user_id
@@ -122,11 +121,15 @@ app.get("/rooms", requireLogin, async (req, res) => {
 
   rows.forEach(r => {
     html += `
-      <div>
+      <div style="margin-bottom:12px;">
         <a href="/rooms/${r.room_id}">
-          ${r.name}
+          <b>${r.name}</b>
         </a>
-        ${r.unread > 0 ? `(Unread: ${r.unread})` : ""}
+
+        <div style="font-size:12px; color:gray;">
+          ${r.last_message || "No messages"}
+          ${r.unread > 0 ? ` (${r.unread})` : ""}
+        </div>
       </div>
     `;
   });

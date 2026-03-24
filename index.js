@@ -240,7 +240,7 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
 `, [roomId]);
 
   const room_name = await db.execute(`
-  SELECT r.room_name
+  SELECT r.name
   FROM room
   WHERE room_id = ? 
   `, [roomId]);

@@ -239,6 +239,12 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
   WHERE room_id = ?
 `, [roomId]);
 
+  const room_name = await db.execute(`
+  SELECT r.room_name
+  FROM room
+  WHERE room_id = ? 
+  `, [roomId]);
+
   const maxId = maxRows[0].max_id;
 
   await db.execute(`
@@ -267,7 +273,7 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
 
   let html = `
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h2>Room ${roomId}</h2>
+      <h2>Room ${room_name}</h2>
       <a href="/rooms/${roomId}/invite">
         <button>Invite</button>
       </a>
@@ -309,6 +315,10 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
       <input name="text" />
       <button>Send</button>
     </form>
+  `;
+
+  html += `
+    <br><a href="/rooms">Back</a>
   `;
 
   res.send(html);

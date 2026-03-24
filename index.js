@@ -212,6 +212,7 @@ app.get("/create-room", requireLogin, async (req, res) => {
 
   html += `
       <br><button>Create Group</button>
+      <br><a href="/rooms">Back</a>
     </form>
   `;
 
@@ -450,4 +451,8 @@ app.post("/rooms/:id/invite", requireLogin, async (req, res) => {
 
 app.listen(3000, () => {
   console.log("http://localhost:3000");
+});
+
+app.use((req, res) => {
+  res.redirect("/");
 });

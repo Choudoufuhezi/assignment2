@@ -222,11 +222,17 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
 `, [maxId, req.session.user_id, roomId]);
 
   const [messages] = await db.execute(`
-  SELECT m.message_id, m.text, u.username,
-        GROUP_CONCAT(e.name) AS emojis
+  SELECT m.message_id, m.text, u.username, GROUP_CONCAT(CONCAT(e.name, ' x', cnt) SEPARATOR ' ') AS emojis
   FROM message m
   JOIN user u ON m.user_id = u.user_id
-  LEFT JOIN reaction r ON m.message_id = r.message_id
+  LEFT JOIN (
+    SELECT 
+      r.message_id,
+      r.emoji_id,
+      COUNT(*) as cnt
+    FROM reaction r
+    GROUP BY r.message_id, r.emoji_id
+  ) rc ON m.message_id = rc.message_id
   LEFT JOIN emoji e ON r.emoji_id = e.emoji_id
   WHERE m.room_id = ?
   GROUP BY m.message_id
@@ -291,10 +297,6 @@ app.post("/rooms/:id", requireLogin, async (req, res) => {
   res.redirect(`/rooms/${roomId}`);
 });
 
-app.listen(3000, () => {
-  console.log("http://localhost:3000");
-});
-
 app.post("/react", requireLogin, async (req, res) => {
   const { message_id, emoji_id, room_id } = req.body;
 
@@ -318,3 +320,6 @@ app.post("/react", requireLogin, async (req, res) => {
   res.redirect(`/rooms/${room_id}`);
 });
 
+app.listen(3000, () => {
+  console.log("http://localhost:3000");
+});

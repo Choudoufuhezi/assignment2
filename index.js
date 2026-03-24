@@ -133,7 +133,7 @@ app.get("/rooms", requireLogin, async (req, res) => {
     `, [req.session.user_id]);
 
   let html = `
-    <h1>Hello, ${name[0]}
+    <h1>Hello, ${name[0].username}
     <h2>Rooms</h2>
     <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
       <tr>

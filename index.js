@@ -263,21 +263,41 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
   ORDER BY m.message_id;
   `, [roomId]);
 
-  let html = `<h2>Room ${roomId}</h2>`;
+  let html = `
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2>Room ${roomId}</h2>
+      <a href="/rooms/${roomId}/invite">
+        <button>Invite</button>
+      </a>
+    </div>
+  `;
 
   messages.forEach(m => {
+    const isMe = m.username === req.session.username;
+
     html += `
-      <div>
-        <b>${m.username}</b>: ${m.text}
-        ${m.emojis ? " [" + m.emojis + "]" : ""}
-        
-        <form method="POST" action="/react" style="display:inline;">
-          <input type="hidden" name="message_id" value="${m.message_id}">
-          <input type="hidden" name="room_id" value="${roomId}">
-          <button name="emoji_id" value="1">👍</button>
-          <button name="emoji_id" value="2">😂</button>
-          <button name="emoji_id" value="3">❤️</button>
-        </form>
+      <div style="
+        display: flex;
+        justify-content: ${isMe ? "flex-end" : "flex-start"};
+        margin: 5px 0;
+      ">
+        <div style="
+          background: ${isMe ? "#d1ffd6" : "#f0f0f0"};
+          padding: 6px 10px;
+          border-radius: 10px;
+          max-width: 60%;
+        ">
+          <b>${m.username}</b>: ${m.text}
+          ${m.emojis ? " [" + m.emojis + "]" : ""}
+
+          <form method="POST" action="/react" style="display:inline;">
+            <input type="hidden" name="message_id" value="${m.message_id}">
+            <input type="hidden" name="room_id" value="${roomId}">
+            <button name="emoji_id" value="1">👍</button>
+            <button name="emoji_id" value="2">😂</button>
+            <button name="emoji_id" value="3">❤️</button>
+          </form>
+        </div>
       </div>
     `;
   });

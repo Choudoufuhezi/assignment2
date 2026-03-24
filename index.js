@@ -181,6 +181,7 @@ app.get("/rooms", requireLogin, async (req, res) => {
 
   html += `
     </table>
+    <h1>Number of groups: ${rows.length}</h1>
     <br><a href="/create-room">Create Room</a>
     <br><a href="/logout">Logout</a>
   `;

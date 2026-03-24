@@ -247,7 +247,7 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
 `, [roomId]);
 
 
-  const maxId = maxRows[0].max_id || 0;
+  const maxId = maxRows[0].max_id;
 
   await db.execute(`
   UPDATE room_user

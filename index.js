@@ -125,7 +125,15 @@ app.get("/rooms", requireLogin, async (req, res) => {
     WHERE ru.user_id = ?
     GROUP BY r.room_id
   `, [req.session.user_id]);
+
+  const [name] = await db.execute( `
+      SELECT user.name
+      FROM user
+      WHERE user.user_id = ?
+    `, [req.session.user_id]);
+
   let html = `
+    <h1>Hello, ${name[0]}
     <h2>Rooms</h2>
     <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
       <tr>

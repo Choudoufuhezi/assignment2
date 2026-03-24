@@ -121,17 +121,34 @@ app.get("/rooms", requireLogin, async (req, res) => {
 
   rows.forEach(r => {
     html += `
-      <div style="margin-bottom:16px;">
-        <div>
-          <a href="/rooms/${r.room_id}"><b>${r.name}</b></a>
-        </div>
-        <div style="font-size:12px; color:gray;">
-          ${r.last_message_date || "No messages yet"}
-        </div>
-        <div style="font-size:12px; color:gray;">
-          Unread: ${r.unread}
-        </div>
-      </div>
+      <tr>
+        <td>
+          <a href="/rooms/${r.room_id}">
+            ${r.name}
+          </a>
+        </td>
+
+        <td>
+          ${r.last_message_date 
+            ? (() => {
+                const d = new Date(r.last_message_date);
+
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+
+                const today = new Date();
+                const diffTime = today - d;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                return `${month}-${day} (${diffDays} day${diffDays !== 1 ? 's' : ''} ago)`;
+              })()
+  : "No messages"}
+        </td>
+
+        <td>
+          ${r.unread}
+        </td>
+      </tr>
     `;
   });
 

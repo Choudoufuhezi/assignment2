@@ -233,7 +233,7 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
     return res.status(400).send("Unauthorized");
   }
   const [roomRows] = await db.execute(`
-  SELECT r.name
+  SELECT name
   FROM room
   WHERE room_id = ? 
   `, [roomId]);

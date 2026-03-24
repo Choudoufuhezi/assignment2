@@ -222,21 +222,21 @@ app.get("/rooms/:id", requireLogin, async (req, res) => {
 `, [maxId, req.session.user_id, roomId]);
 
   const [messages] = await db.execute(`
-  SELECT m.message_id, m.text, u.username, GROUP_CONCAT(CONCAT(e.name, ' x', cnt) SEPARATOR ' ') AS emojis
+  SELECT m.message_id, m.text, u.username, GROUP_CONCAT(CONCAT(e.name, ' x', rc.cnt) SEPARATOR ' ') AS emojis
   FROM message m
   JOIN user u ON m.user_id = u.user_id
   LEFT JOIN (
     SELECT 
-      r.message_id,
-      r.emoji_id,
+      message_id,
+      emoji_id,
       COUNT(*) as cnt
-    FROM reaction r
-    GROUP BY r.message_id, r.emoji_id
+    FROM reaction
+    GROUP BY message_id, emoji_id
   ) rc ON m.message_id = rc.message_id
-  LEFT JOIN emoji e ON r.emoji_id = e.emoji_id
+  LEFT JOIN emoji e ON rc.emoji_id = e.emoji_id
   WHERE m.room_id = ?
   GROUP BY m.message_id
-  ORDER BY m.message_id
+  ORDER BY m.message_id;
   `, [roomId]);
 
   let html = `<h2>Room ${roomId}</h2>`;
